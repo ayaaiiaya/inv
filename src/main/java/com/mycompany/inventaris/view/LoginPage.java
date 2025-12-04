@@ -1,5 +1,7 @@
 package com.mycompany.inventaris.view;
 
+import com.mycompany.inventaris.dao.LoginDAO;
+import com.mycompany.inventaris.model.User;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -164,11 +166,24 @@ public class LoginPage extends StackPane {
             alert.showAndWait();
             return;
         }
-
-        if (username.equals("user") && password.equals("user123")) {
-            Scene newScene = new Scene(new UserPage(), 1280, 720);
-            stage.setScene(newScene);
-        } else {
+        User user = LoginDAO.login(username, password);
+        
+        if(user != null){
+            String role = user.getRole().toLowerCase();
+            
+            if(role.equals("mahasiswa") || role.equals("dosen") || role.equals("karyawan")){
+                Scene newScene = new Scene(new UserPage(user), 1280, 720);
+                stage.setScene(newScene);
+            }
+            if(role.equals("admin")){
+//                Scene newScene = new Scene(new AdminPage(), 1280, 720);
+//                stage.setScene(newScene);
+            }
+            if(role.equals("superadmin")){
+//                Scene newScene = new Scene(new SuperAdminPage(), 1280, 720);
+//                stage.setScene(newScene);
+            }
+        }else {
             Alert alert = new Alert(Alert.AlertType.ERROR);
             alert.setTitle("Login Gagal");
             alert.setHeaderText(null);

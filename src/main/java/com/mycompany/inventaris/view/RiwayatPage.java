@@ -1,5 +1,6 @@
 package com.mycompany.inventaris.view;
 
+import com.mycompany.inventaris.model.User;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -13,7 +14,9 @@ import javafx.stage.Stage;
 
 public class RiwayatPage extends BorderPane {
     
+    private User user;
     public RiwayatPage() {
+        this.user = user;
         loadStylesheet();
         initializeUI();
     }
@@ -177,7 +180,7 @@ public class RiwayatPage extends BorderPane {
         
         dashboardBtn.setOnAction(e -> {
             Stage currentStage = (Stage) dashboardBtn.getScene().getWindow();
-            Scene newScene = new Scene(new UserPage(), 1280, 720);
+            Scene newScene = new Scene(new UserPage(user), 1280, 720);
             currentStage.setScene(newScene);
         });
         

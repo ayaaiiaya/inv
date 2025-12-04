@@ -1,6 +1,8 @@
 package com.mycompany.inventaris.view;
 
+import com.mycompany.inventaris.dao.BarangDAO;
 import com.mycompany.inventaris.model.Barang;
+import com.mycompany.inventaris.model.User;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -22,15 +24,11 @@ public class PeminjamanBarangPage extends BorderPane {
     private TableView<BarangRow> table;
     private List<Barang> allData;
     private List<BarangRow> selectedItems = new ArrayList<>();
+    private User user;
 
-    public PeminjamanBarangPage() {
-        allData = List.of(
-            new Barang(1, "RL001", "Spidol", "Reusable", 25, "Baik", "Ruang A", "Tersedia"),
-            new Barang(2, "RL002", "Penghapus Papan Tulis", "Reusable", 25, "Baik", "Ruang B", "Tersedia"),
-            new Barang(3, "CL001", "Kertas HVS", "Consumable", 18, "Baik", "Ruang C", "Tersedia"),
-            new Barang(4, "NC001", "Webcam", "Non Consumable", 20, "Baik", "Lab", "Tersedia"),
-            new Barang(5, "NC002", "Proyektor", "Non Consumable", 20, "Baik", "Ruang D", "Tersedia")
-        );
+    public PeminjamanBarangPage(User user) {
+        allData = BarangDAO.getAll();
+        this.user = user;
         loadStylesheet();
         initializeUI();
     }
@@ -107,7 +105,7 @@ public class PeminjamanBarangPage extends BorderPane {
         stokCol.setMinWidth(100);
         stokCol.setMaxWidth(120);
         stokCol.setCellValueFactory(data -> 
-            new SimpleStringProperty(data.getValue().barang.getstok() + " pcs"));
+            new SimpleStringProperty(data.getValue().barang.getStok()));
 
         TableColumn<BarangRow, Void> actionCol = new TableColumn<>("Aksi");
         actionCol.setMinWidth(180);
@@ -159,7 +157,10 @@ public class PeminjamanBarangPage extends BorderPane {
         table.getColumns().addAll(noCol, idCol, nameCol, catCol, stokCol, actionCol);
         
         // Load data
-        allData.forEach(b -> table.getItems().add(new BarangRow(b)));
+        List<Barang> allData = BarangDAO.getAll();
+        for (Barang b : allData) {
+            table.getItems().add(new BarangRow(b));
+        }
 
         // Search functionality
         searchField.textProperty().addListener((obs, old, newVal) -> {
@@ -220,7 +221,14 @@ public class PeminjamanBarangPage extends BorderPane {
         userImage.setClip(clipCircle);
 
         // label "User"
-        Label guestLabel = new Label("Amy");
+        String fullName = user.getNama();
+        String[] parts = fullName.split(" ");
+        
+        String displayName = parts[0];
+        if(parts.length > 1){
+            displayName += " " + parts[1];
+        }
+        Label guestLabel = new Label(displayName.toUpperCase());
         guestLabel.getStyleClass().add("sidebar-user-label");
 
         // posisi foto kiri - tulisan kanan (gantinya Vbox jadi HBox)
@@ -236,7 +244,7 @@ public class PeminjamanBarangPage extends BorderPane {
         
         dashboardBtn.setOnAction(e -> {
             Stage currentStage = (Stage) dashboardBtn.getScene().getWindow();
-            Scene newScene = new Scene(new UserPage(), 1280, 720);
+            Scene newScene = new Scene(new UserPage(user), 1280, 720);
             currentStage.setScene(newScene);
         });
         
@@ -329,6 +337,9 @@ public class PeminjamanBarangPage extends BorderPane {
 
         // Nama Peminjam
         TextField namaPeminjam = new TextField();
+        if(user != null){
+            namaPeminjam.setText(user.getNama());
+        }
         namaPeminjam.setPromptText("Ketik nama disini");
         VBox namaField = createSimpleField("Nama Peminjam", namaPeminjam);
 
@@ -518,7 +529,7 @@ public class PeminjamanBarangPage extends BorderPane {
         okBtn.setOnAction(e -> {
             popup.close();
             Stage currentStage = (Stage) this.getScene().getWindow();
-            Scene newScene = new Scene(new UserPage(), 1280, 720);
+            Scene newScene = new Scene(new UserPage(user), 1280, 720);
             currentStage.setScene(newScene);
         });
 

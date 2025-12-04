@@ -1,5 +1,6 @@
 package com.mycompany.inventaris.view;
 
+import com.mycompany.inventaris.model.User;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -15,8 +16,10 @@ import javafx.stage.Stage;
 public class UserPage extends BorderPane {
 
     private Stage stage;
+    private User user;
 
-    public UserPage() {
+    public UserPage(User user) {
+        this.user = user;
         loadStylesheet();
         initializeUI();
     }
@@ -63,7 +66,14 @@ public class UserPage extends BorderPane {
         userImage.setClip(clipCircle);
 
         // label "User"
-        Label guestLabel = new Label("Amy");
+        String fullName = user.getNama();
+        String[] parts = fullName.split(" ");
+        
+        String displayName = parts[0];
+        if(parts.length > 1){
+            displayName += " " + parts[1];
+        }
+        Label guestLabel = new Label(displayName.toUpperCase());
         guestLabel.getStyleClass().add("sidebar-user-label");
 
         // posisi foto kiri - tulisan kanan (gantinya Vbox jadi HBox)
@@ -106,7 +116,7 @@ public class UserPage extends BorderPane {
         centerBox.setPadding(new Insets(80));
 
         // Title
-        Label halo = new Label("HALO, AMY!!");
+        Label halo = new Label("HALO, " + user.getNama().toUpperCase() + "!!");
         halo.getStyleClass().add("welcome-title");
 
         // Buttons
@@ -114,7 +124,7 @@ public class UserPage extends BorderPane {
         peminjamanBtn.getStyleClass().add("btn-peminjaman");
         peminjamanBtn.setOnAction(e -> {
             Stage currentStage = (Stage) peminjamanBtn.getScene().getWindow();
-            Scene newScene = new Scene(new PeminjamanBarangPage(), 1280, 720);
+            Scene newScene = new Scene(new PeminjamanBarangPage(user), 1280, 720);
             currentStage.setScene(newScene);
         });
 
