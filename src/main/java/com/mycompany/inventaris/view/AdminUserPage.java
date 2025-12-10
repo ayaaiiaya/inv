@@ -441,6 +441,7 @@ public class AdminUserPage extends BorderPane {
         uploadText.setStyle("-fx-text-fill: #94a3b8; -fx-font-size: 10px; -fx-text-alignment: center;");
         uploadText.setWrapText(true);
         
+        final File[] selectedPhoto = new File[1];
         uploadArea.getChildren().add(uploadText);
         uploadArea.setOnMouseClicked(e -> {
             FileChooser fileChooser = new FileChooser();
@@ -450,6 +451,7 @@ public class AdminUserPage extends BorderPane {
             );
             File file = fileChooser.showOpenDialog(popup);
             if (file != null) {
+                selectedPhoto[0] = file;
                 uploadText.setText("Selected:\n" + file.getName());
             }
         });
@@ -605,6 +607,10 @@ public class AdminUserPage extends BorderPane {
             user.setIdentity(idField.getText());
             user.setRole(positionCombo.getValue());
             user.setStatus("Aktif");
+            
+            if(selectedPhoto[0] != null){
+                user.setPhoto(selectedPhoto[0].getAbsolutePath());
+            }
             
             UserAdminDAO dao = new UserAdminDAO();
             boolean success = dao.insert(user);

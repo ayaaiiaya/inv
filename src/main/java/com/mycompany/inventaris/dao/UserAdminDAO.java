@@ -23,8 +23,8 @@ public class UserAdminDAO {
     //insert user
     public boolean insert(User user){
         String sql = "insert into user (name, username, password, email, phone, birthPlace,"
-                + "birthDate, identity_number, role, status)"
-                + "values (?,?,?,?,?,?,?,?,?,?)";
+                + "birthDate, identity_number, role, status, photo)"
+                + "values (?,?,?,?,?,?,?,?,?,?,?)";
         try{
             PreparedStatement ps = conn.prepareStatement(sql);
             ps.setString(1, user.getNama());
@@ -37,6 +37,7 @@ public class UserAdminDAO {
             ps.setString(8, user.getIdentity());
             ps.setString(9, user.getRole());
             ps.setString(10, user.getStatus());
+            ps.setString(11, user.getPhoto());
             
             return ps.executeUpdate() > 0;
         }catch(Exception e){
@@ -63,6 +64,7 @@ public class UserAdminDAO {
                 u.setIdentity(rs.getString("identity_number"));
                 u.setRole(rs.getString("role"));
                 u.setStatus(rs.getString("status"));
+                u.setPhoto(rs.getString("photo"));
                 list.add(u);
             }
 
