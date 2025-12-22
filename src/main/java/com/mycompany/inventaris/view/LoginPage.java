@@ -266,17 +266,26 @@ try {
 }
 
 if (u == null) {
-    AuditTrailDAO.log(
-            0,
-            user,
-            "LOGIN",
-            "Login gagal",
-            ip,
-            "GAGAL"
-    );
+
+    // check if username exists
+    User existingUser = LoginDAO.findByUsername(user);
+
+    if (existingUser != null) {
+        // username exists → wrong password
+        AuditTrailDAO.log(
+                existingUser.getIdUser(),
+                existingUser.getUsername(),
+                "LOGIN",
+                "Login gagal (password salah)",
+                ip,
+                "GAGAL"
+        );
+    }
+
     show("Login Gagal", "Username atau password salah!");
     return;
 }
+
 
 AuditTrailDAO.log(
         u.getIdUser(),

@@ -10,6 +10,7 @@ package com.mycompany.inventaris.view;
  */
 
 import com.mycompany.inventaris.dao.BarangDAO;
+import com.mycompany.inventaris.dao.AuditTrailDAO;
 import com.mycompany.inventaris.model.Barang;
 import com.mycompany.inventaris.model.User;
 import javafx.beans.property.SimpleStringProperty;
