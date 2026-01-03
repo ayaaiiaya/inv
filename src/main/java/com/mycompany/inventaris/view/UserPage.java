@@ -1,140 +1,271 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+ */
 package com.mycompany.inventaris.view;
 
-import com.mycompany.inventaris.dao.BarangDAO;
-import com.mycompany.inventaris.model.Barang;
-import javafx.beans.property.ReadOnlyObjectWrapper;
+/**
+ *
+ * @author Amy
+ */
+
+import com.mycompany.inventaris.model.User;
+import com.mycompany.inventaris.dao.AuditTrailDAO;
+import java.io.File;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
+import javafx.stage.Stage;
 
-public class UserPage extends StackPane {
+public class UserPage extends BorderPane {
 
-    private TableView<Barang> table;
+    private Stage stage;
+    private User user;
 
-    public UserPage() {
+    public UserPage(User user) {
+        this.user = user;
         initializeUI();
     }
 
     private void initializeUI() {
 
-        // ========== BACKGROUND SHAPES ==========
-        Pane bg = new Pane();
-
-        Circle topRed = new Circle(170, Color.web("#931717"));
-        topRed.setLayoutX(500);
-        topRed.setLayoutY(-40);
-
-        Circle smallBlue = new Circle(35, Color.web("#3C4C79"));
-        smallBlue.setLayoutX(300);
-        smallBlue.setLayoutY(140);
-
-        Circle topRight = new Circle(150, Color.web("#A42323"));
-        topRight.setLayoutX(1250);
-        topRight.setLayoutY(40);
-
-        bg.getChildren().addAll(topRed, smallBlue, topRight);
+        // SIDEBAR 
+        VBox sidebar = new VBox(10);
+        sidebar.setPadding(new Insets(20, 10, 20, 10));
+        sidebar.setAlignment(Pos.TOP_LEFT);
+        sidebar.setPrefWidth(200);
+        sidebar.setStyle(
+                "-fx-background-color: white;" +
+                "-fx-padding: 20 10;" +
+                "-fx-border-width: 0 1 0 0;" +
+                "-fx-border-color: #e5e7eb;"
+        );
 
 
-        // ========== NAVBAR ==========
-        BorderPane navbar = new BorderPane();
-        navbar.setStyle("-fx-padding: 25 60; -fx-font-family: 'Poppins';");
-
+        // Logo
         ImageView logo = new ImageView(
                 new Image(getClass().getResourceAsStream("/assets/logoAsa.png"))
         );
-        logo.setFitHeight(80);
+        logo.setFitHeight(70);
         logo.setPreserveRatio(true);
-        navbar.setLeft(logo);
 
-        HBox menu = new HBox(
-                new Label("Home"),
-                new Label("About"),
-                new Label("Guide"),
-                new Label("Contact")
+        VBox logoBox = new VBox(logo);
+        logoBox.setAlignment(Pos.TOP_LEFT);
+        logoBox.setPadding(new Insets(0,0,0,0));
+
+
+        Image userPhoto;
+
+    if (user.getPhoto() != null && user.getPhoto().length > 0) {
+        userPhoto = new Image(
+        new java.io.ByteArrayInputStream(user.getPhoto())
         );
-        menu.setSpacing(40);
-        menu.setStyle("-fx-font-size: 16px; -fx-text-fill: #334155; -fx-font-weight: bold;");
-        menu.setAlignment(Pos.CENTER);
-        navbar.setCenter(menu);
+    } else {
+        userPhoto = new Image(
+        getClass().getResourceAsStream("/assets/user.png")
+    );
+    }
+        ImageView userImage = new ImageView(userPhoto);
+        userImage.setFitWidth(40);
+        userImage.setFitHeight(40);
+        userImage.setPreserveRatio(true);
 
+        Circle clipCircle = new Circle(20, 20, 20);
+        userImage.setClip(clipCircle);
 
-        // ========== HEADER ==========
-        Label hello = new Label("Hello, User !!");
-        hello.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #334155;");
-
-        Label title = new Label("Daftar Barang");
-        title.setStyle("-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #1e293b;");
-
-        VBox header = new VBox(hello, title);
-        header.setSpacing(8);
-        header.setAlignment(Pos.CENTER_LEFT);
-        header.setStyle("-fx-padding: 20 60 10 60;");
-
-
-        // ========== TABLEVIEW ==========
-        table = new TableView<>();
-        table.setPrefWidth(1000);
-
-        // Kolom nomor otomatis (index + 1)
-        TableColumn<Barang, Number> noCol = new TableColumn<>("No.");
-        noCol.setPrefWidth(60);
-        noCol.setCellValueFactory(col ->
-                new ReadOnlyObjectWrapper<>(table.getItems().indexOf(col.getValue()) + 1)
+        Label nameLabel = new Label(user.getNama());
+        nameLabel.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #1e293b;");
+        
+        Label roleLabel = new Label(user.getRole().toUpperCase());
+        roleLabel.setStyle(
+                "-fx-font-size: 10px;" +
+                "-fx-text-fill: #9ca3af;" +
+                "-fx-font-weight: normal;"
         );
 
-        TableColumn<Barang, String> idCol = new TableColumn<>("ID Barang");
-        idCol.setPrefWidth(200);
-        idCol.setCellValueFactory(new PropertyValueFactory<>("idBarang"));
+        VBox textBox = new VBox(2, nameLabel, roleLabel);
+        textBox.setAlignment(Pos.CENTER_LEFT);
 
-        TableColumn<Barang, String> nameCol = new TableColumn<>("Nama Barang");
-        nameCol.setPrefWidth(300);
-        nameCol.setCellValueFactory(new PropertyValueFactory<>("nama"));
+        HBox userBox = new HBox(10, userImage, textBox);
+        userBox.setAlignment(Pos.CENTER_LEFT);
+        userBox.setPadding(new Insets(10, 10, 20, 10));
 
-        TableColumn<Barang, String> catCol = new TableColumn<>("Kategori");
-        catCol.setPrefWidth(250);
-        catCol.setCellValueFactory(new PropertyValueFactory<>("kategori"));
 
-        // Kolom tombol Detail
-        TableColumn<Barang, Void> actionCol = new TableColumn<>("Action");
-        actionCol.setPrefWidth(160);
-        actionCol.setStyle("-fx-alignment: CENTER;");
+        // MENU 
+        VBox menuBox = new VBox(8);
+        menuBox.setAlignment(Pos.TOP_CENTER);
 
-        actionCol.setCellFactory(col -> new TableCell<>() {
-            private final Button btn = new Button("Detail");
+        Button dashboardBtn = createMenuButton("🏠  Dashboard", true);
+        Button statusBtn = createMenuButton("📊  Status", false);
+        Button riwayatBtn = createMenuButton("🕐  Riwayat", false);
 
-            {
-                btn.setStyle("-fx-background-color: transparent; -fx-text-fill: #B91C1C; "
-                        + "-fx-font-size: 14px; -fx-font-weight: bold;");
-            }
-
-            @Override
-            protected void updateItem(Void item, boolean empty) {
-                super.updateItem(item, empty);
-                setGraphic(empty ? null : btn);
-            }
+        statusBtn.setOnAction(e -> {
+            Scene newScene = new Scene(new StatusPage(user), 1280, 720);
+            Stage currentStage = (Stage) statusBtn.getScene().getWindow();
+            currentStage.setScene(newScene);
+        });
+        
+        riwayatBtn.setOnAction(e -> {
+            Scene newScene = new Scene(new RiwayatPage(user), 1280, 720);
+            Stage currentStage = (Stage) riwayatBtn.getScene().getWindow();
+            currentStage.setScene(newScene);
         });
 
-        table.getColumns().addAll(noCol, idCol, nameCol, catCol, actionCol);
-
-        // Load Data Dari DB
-        table.setItems(BarangDAO.getAll());
-
-        // Wrapper supaya tidak nempel kiri-kanan
-        HBox tableWrapper = new HBox(table);
-        tableWrapper.setAlignment(Pos.CENTER);
-        tableWrapper.setStyle("-fx-padding: 10 60 40 60;");
+        menuBox.getChildren().addAll(dashboardBtn, statusBtn, riwayatBtn);
 
 
-        // ========== LAYOUT UTAMA ==========
-        VBox content = new VBox(navbar, header, tableWrapper);
-        content.setSpacing(10);
-        content.setAlignment(Pos.TOP_CENTER);
+        Region spacer = new Region();
+        VBox.setVgrow(spacer, Priority.ALWAYS);
 
-        this.getChildren().addAll(bg, content);
+        Button logoutBtn = new Button("↩ Logout");
+        logoutBtn.setAlignment(Pos.CENTER_LEFT);
+        logoutBtn.setStyle(
+                "-fx-background-color: transparent;" +
+                "-fx-font-size: 13px;" +
+                "-fx-text-fill: #475569;" +
+                "-fx-padding: 12 10;" +
+                "-fx-font-weight: bold;" +
+                "-fx-cursor: hand;"
+        );
+      logoutBtn.setOnAction(e -> {
+    String ip = "UNKNOWN";
+    try {
+        ip = java.net.InetAddress.getLocalHost().getHostAddress();
+    } catch (Exception ex) {
+        ex.printStackTrace();
+    }
+
+    AuditTrailDAO.log(
+        user.getIdUser(),          
+        user.getUsername(),         
+        "LOGOUT",
+        "Pengguna keluar dari sistem",
+        ip,
+        "BERHASIL"
+    ); 
+        Stage currentStage = (Stage) logoutBtn.getScene().getWindow();
+    Scene newScene = new Scene(new MainPage(currentStage), 1280, 720);
+    currentStage.setScene(newScene);
+       });
+
+        sidebar.getChildren().addAll(logoBox, userBox, menuBox, spacer, logoutBtn);
+
+
+
+        // MAIN CONTENT 
+        StackPane mainContent = new StackPane();
+        mainContent.setStyle("-fx-background-color: #f8fafc;");
+
+        VBox centerBox = new VBox(40);
+        centerBox.setAlignment(Pos.CENTER);
+        centerBox.setPadding(new Insets(60));
+
+        Label halo = new Label("HALO, " + user.getNama() + " !!");
+        halo.setStyle(
+                "-fx-font-size: 40px;" +
+                "-fx-font-weight: bold;" +
+                "-fx-text-fill: #334155;"
+        );
+
+
+        Button peminjamanBtn = new Button("PEMINJAMAN BARANG");
+        peminjamanBtn.setStyle(
+                "-fx-background-color: #A42323;" +
+                "-fx-text-fill: white;" +
+                "-fx-font-size: 13px;" +
+                "-fx-font-weight: bold;" +
+                "-fx-padding: 10 26;" +
+                "-fx-background-radius: 8;" +
+                "-fx-cursor: hand;"
+        );
+
+        peminjamanBtn.setOnAction(e -> {
+            Stage currentStage = (Stage) peminjamanBtn.getScene().getWindow();
+            Scene newScene = new Scene(new PeminjamanBarangPage(user), 1280, 720);
+            currentStage.setScene(newScene);
+        });
+
+
+        Button pengembalianBtn = new Button("PENGEMBALIAN BARANG");
+        pengembalianBtn.setStyle(
+                "-fx-background-color: #3C4C79;" +
+                "-fx-text-fill: white;" +
+                "-fx-font-size: 13px;" +
+                "-fx-font-weight: bold;" +
+                "-fx-padding: 10 26;" +
+                "-fx-background-radius: 8;" +
+                "-fx-cursor: hand;"
+        );
+        
+        pengembalianBtn.setOnAction(e -> {
+            Stage currentStage = (Stage) pengembalianBtn.getScene().getWindow();
+            Scene newScene = new Scene(new PengembalianBarangPage(user), 1280, 720);
+            currentStage.setScene(newScene);
+        });
+        
+        Button penggantianBtn = new Button("PENGGANTIAN BARANG");
+        penggantianBtn.setStyle(
+            "-fx-background-color: #A42323;" +
+            "-fx-text-fill: white;" +
+            "-fx-font-size: 13px;" +
+            "-fx-font-weight: bold;" +
+            "-fx-padding: 10 26;" +
+            "-fx-background-radius: 8;" +
+            "-fx-cursor: hand;"
+        );
+
+        penggantianBtn.setOnAction(e -> {
+            Stage currentStage = (Stage) penggantianBtn.getScene().getWindow();
+            Scene newScene = new Scene(new PenggantianBarangPage(user), 1280, 720);
+            currentStage.setScene(newScene);
+        });
+
+        HBox buttonBox = new HBox(30, peminjamanBtn, pengembalianBtn, penggantianBtn);
+        buttonBox.setAlignment(Pos.CENTER);
+
+        centerBox.getChildren().addAll(halo, buttonBox);
+        mainContent.getChildren().add(centerBox);
+
+        this.setLeft(sidebar);
+        this.setCenter(mainContent);
+    }
+
+
+    private Button createMenuButton(String text, boolean isActive) {
+        Button btn = new Button(text);
+
+        if (isActive) {
+            btn.setStyle(
+                    "-fx-background-color: rgba(164,35,35,0.10);" +
+                    "-fx-font-weight: bold;" +
+                    "-fx-text-fill: #111827;" +
+                    "-fx-padding: 10 15;" +
+                    "-fx-background-radius: 6;" +
+                    "-fx-font-size: 13px;" +
+                    "-fx-alignment: center-left;" +
+                    "-fx-cursor: hand;"
+            );
+        } else {
+            btn.setStyle(
+                    "-fx-background-color: transparent;" +
+                    "-fx-font-size: 13px;" +
+                    "-fx-text-fill: #475569;" +
+                    "-fx-padding: 10 15;" +
+                    "-fx-font-weight: bold;" +
+                    "-fx-alignment: center-left;" +
+                    "-fx-background-radius: 6;" +
+                    "-fx-cursor: hand;"
+            );
+        }
+
+        btn.setMaxWidth(Double.MAX_VALUE);
+        return btn;
     }
 }

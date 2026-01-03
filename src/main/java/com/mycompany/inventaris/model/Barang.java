@@ -10,11 +10,6 @@ package com.mycompany.inventaris.model;
  */
 public class Barang {
     
-    public enum Kategori{
-        consumable,
-        non_consumable,
-        reusable
-    }
     private int id_barang;
     private String kode_barang;
     private String nama_barang;
@@ -69,7 +64,7 @@ public class Barang {
         this.kategori = kategori;
     }
     
-    public int getstok(){
+    public int getStok(){
         return stok;
     }
     
