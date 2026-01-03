@@ -9,6 +9,12 @@ package com.mycompany.inventaris.model;
  * @author pnady
  */
 public class Barang {
+    
+    public enum Kategori{
+        consumable,
+        non_consumable,
+        reusable
+    }
     private int id_barang;
     private String kode_barang;
     private String nama_barang;
@@ -31,35 +37,67 @@ public class Barang {
         this.status = status;
     }
     
-    public int getId(){
+    public int getIdBarang(){
         return id_barang;
+    }
+    
+    public void setIdBarang(int id_barang){
+        this.id_barang = id_barang;
     }
     
     public String getKode(){
         return kode_barang;
     }
     
+    public void setKode(String kode_barang){
+        this.kode_barang = kode_barang;
+    }
+    
     public String getNama(){
         return nama_barang;
+    }
+    
+    public void setNama(String nama_barang){
+        this.nama_barang = nama_barang;
     }
     
     public String getKategori(){
         return kategori;
     }
     
+    public void setKategori(String kategori){
+        this.kategori = kategori;
+    }
+    
     public int getstok(){
         return stok;
+    }
+    
+    public void setStok(int stok){
+        this.stok = stok;
     }
     
     public String getKondisi(){
         return kondisi;
     }
     
+    public void setKondisi(String kondisi){
+        this.kondisi = kondisi;
+    }
+    
     public String getLokasi(){
         return lokasi;
     }
     
+    public void setLokasi(String lokasi){
+        this.lokasi = lokasi;
+    }
+    
     public String getStatus(){
         return status;
+    }
+    
+    public void setStatus(String status){
+        this.status = status;
     }
 }

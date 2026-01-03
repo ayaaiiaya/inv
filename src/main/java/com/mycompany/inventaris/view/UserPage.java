@@ -1,7 +1,11 @@
 package com.mycompany.inventaris.view;
 
+import com.mycompany.inventaris.dao.BarangDAO;
+import com.mycompany.inventaris.model.Barang;
+import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
@@ -10,13 +14,15 @@ import javafx.scene.shape.Circle;
 
 public class UserPage extends StackPane {
 
+    private TableView<Barang> table;
+
     public UserPage() {
         initializeUI();
     }
 
     private void initializeUI() {
 
-        // ===== BACKGROUND SHAPES =====
+        // ========== BACKGROUND SHAPES ==========
         Pane bg = new Pane();
 
         Circle topRed = new Circle(170, Color.web("#931717"));
@@ -34,7 +40,7 @@ public class UserPage extends StackPane {
         bg.getChildren().addAll(topRed, smallBlue, topRight);
 
 
-        // ===== NAVBAR =====
+        // ========== NAVBAR ==========
         BorderPane navbar = new BorderPane();
         navbar.setStyle("-fx-padding: 25 60; -fx-font-family: 'Poppins';");
 
@@ -52,12 +58,12 @@ public class UserPage extends StackPane {
                 new Label("Contact")
         );
         menu.setSpacing(40);
-        menu.setStyle("-fx-font-size: 16px; -fx-text-fill: #334155; -fx-font-weight: bold; -fx-padding: 0 0 0 300; -fx-font-family: 'Poppins';");
+        menu.setStyle("-fx-font-size: 16px; -fx-text-fill: #334155; -fx-font-weight: bold;");
         menu.setAlignment(Pos.CENTER);
         navbar.setCenter(menu);
 
 
-        // ===== TEXT CONTENT =====
+        // ========== HEADER ==========
         Label hello = new Label("Hello, User !!");
         hello.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #334155;");
 
@@ -70,23 +76,31 @@ public class UserPage extends StackPane {
         header.setStyle("-fx-padding: 20 60 10 60;");
 
 
-        // ===== TABLE =====
-        TableView<String> table = new TableView<>();
+        // ========== TABLEVIEW ==========
+        table = new TableView<>();
         table.setPrefWidth(1000);
 
-        TableColumn<String, String> noCol = new TableColumn<>("No.");
+        // Kolom nomor otomatis (index + 1)
+        TableColumn<Barang, Number> noCol = new TableColumn<>("No.");
         noCol.setPrefWidth(60);
+        noCol.setCellValueFactory(col ->
+                new ReadOnlyObjectWrapper<>(table.getItems().indexOf(col.getValue()) + 1)
+        );
 
-        TableColumn<String, String> idCol = new TableColumn<>("ID Barang");
+        TableColumn<Barang, String> idCol = new TableColumn<>("ID Barang");
         idCol.setPrefWidth(200);
+        idCol.setCellValueFactory(new PropertyValueFactory<>("idBarang"));
 
-        TableColumn<String, String> nameCol = new TableColumn<>("Nama Barang");
+        TableColumn<Barang, String> nameCol = new TableColumn<>("Nama Barang");
         nameCol.setPrefWidth(300);
+        nameCol.setCellValueFactory(new PropertyValueFactory<>("nama"));
 
-        TableColumn<String, String> catCol = new TableColumn<>("Kategori Barang");
+        TableColumn<Barang, String> catCol = new TableColumn<>("Kategori");
         catCol.setPrefWidth(250);
+        catCol.setCellValueFactory(new PropertyValueFactory<>("kategori"));
 
-        TableColumn<String, Void> actionCol = new TableColumn<>("Action");
+        // Kolom tombol Detail
+        TableColumn<Barang, Void> actionCol = new TableColumn<>("Action");
         actionCol.setPrefWidth(160);
         actionCol.setStyle("-fx-alignment: CENTER;");
 
@@ -94,7 +108,8 @@ public class UserPage extends StackPane {
             private final Button btn = new Button("Detail");
 
             {
-                btn.setStyle("-fx-background-color: transparent; -fx-text-fill: #B91C1C; -fx-font-weight: bold;");
+                btn.setStyle("-fx-background-color: transparent; -fx-text-fill: #B91C1C; "
+                        + "-fx-font-size: 14px; -fx-font-weight: bold;");
             }
 
             @Override
@@ -106,14 +121,16 @@ public class UserPage extends StackPane {
 
         table.getColumns().addAll(noCol, idCol, nameCol, catCol, actionCol);
 
+        // Load Data Dari DB
+        table.setItems(BarangDAO.getAll());
 
-        // ===== WRAP TABLE WITH SPACING =====
+        // Wrapper supaya tidak nempel kiri-kanan
         HBox tableWrapper = new HBox(table);
         tableWrapper.setAlignment(Pos.CENTER);
-        tableWrapper.setStyle("-fx-padding: 10 60 40 60;"); // ✅ spacing kanan-kiri
+        tableWrapper.setStyle("-fx-padding: 10 60 40 60;");
 
 
-        // ===== CONTENT STACK =====
+        // ========== LAYOUT UTAMA ==========
         VBox content = new VBox(navbar, header, tableWrapper);
         content.setSpacing(10);
         content.setAlignment(Pos.TOP_CENTER);

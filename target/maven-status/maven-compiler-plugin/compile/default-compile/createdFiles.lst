@@ -1,5 +1,8 @@
 com\mycompany\inventaris\Inventaris.class
+com\mycompany\inventaris\dao\BarangDAO.class
+com\mycompany\inventaris\model\Barang$Kategori.class
 com\mycompany\inventaris\view\UserPage.class
 com\mycompany\inventaris\view\MainPage.class
 com\mycompany\inventaris\Koneksi.class
+com\mycompany\inventaris\model\Barang.class
 com\mycompany\inventaris\view\UserPage$1.class
