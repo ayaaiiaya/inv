@@ -11,6 +11,8 @@ package com.mycompany.inventaris.view;
 
 import com.mycompany.inventaris.model.User;
 import com.mycompany.inventaris.dao.AuditTrailDAO;
+import com.mycompany.inventaris.dao.ReplacementDAO;
+import com.mycompany.inventaris.model.Replacement;
 import java.io.File;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.geometry.Insets;
@@ -466,26 +468,40 @@ public class PenggantianBarangPage extends BorderPane {
             "-fx-pref-width: 350;"
         );
         submitBtn.setOnAction(e -> {
-            if (namaBarang.getText().isEmpty() || kodeBarang.getText().isEmpty() || 
-                kondisiCombo.getValue() == null || keterangan.getText().isEmpty()) {
-                Alert alert = new Alert(Alert.AlertType.ERROR);
-                alert.setTitle("Error");
-                alert.setHeaderText(null);
-                alert.setContentText("Semua field harus diisi!");
-                alert.showAndWait();
-            } else {
-                // TODO: Save to database
-                popup.hide();
-                javafx.application.Platform.runLater(() -> {
-                    try {
-                        Thread.sleep(100);
-                    } catch (InterruptedException ex) {
-                        ex.printStackTrace();
-                    }
-                    showSuccessPopup();
-                });
-            }
-        });
+    if (namaBarang.getText().isEmpty() ||
+        kodeBarang.getText().isEmpty() ||
+        kondisiCombo.getValue() == null ||
+        keterangan.getText().isEmpty()) {
+
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Error");
+        alert.setHeaderText(null);
+        alert.setContentText("Semua field harus diisi!");
+        alert.showAndWait();
+        return;
+    }
+
+    Replacement r = new Replacement(
+    user.getIdUser(),
+    namaBarang.getText(),
+    kodeBarang.getText(),
+    kondisiCombo.getValue(),
+    keterangan.getText()
+);
+
+boolean success = ReplacementDAO.insert(r);
+    if (success) {
+        popup.close();
+        showSuccessPopup();
+    } else {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Gagal");
+        alert.setHeaderText(null);
+        alert.setContentText("Gagal menyimpan data ke database!");
+        alert.showAndWait();
+    }
+});
+
         
         container.getChildren().addAll(header, title, fields, submitBtn);
         

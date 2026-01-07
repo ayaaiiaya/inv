@@ -41,7 +41,7 @@ public class PengembalianDAO {
             ps1.setString(4, p.getLokasi());
             ps1.setInt(5, p.getJumlah());
             ps1.setDate(6, new java.sql.Date(p.getTanggalKembali().getTime()));
-            ps1.setString(7, p.getStatus());
+            ps1.setString(7, "dikembalikan");
             ps1.executeUpdate();
             
             //update

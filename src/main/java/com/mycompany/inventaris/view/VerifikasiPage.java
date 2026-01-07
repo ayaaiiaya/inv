@@ -11,6 +11,8 @@ package com.mycompany.inventaris.view;
 
 import com.mycompany.inventaris.model.User;
 import com.mycompany.inventaris.dao.AuditTrailDAO;
+import com.mycompany.inventaris.dao.PeminjamanDAO;
+import com.mycompany.inventaris.model.VerifikasiDTO;
 import java.io.File;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.geometry.Insets;
@@ -27,22 +29,16 @@ import java.util.List;
 
 public class VerifikasiPage extends BorderPane {
     
-    private TableView<PermintaanData> table;
-    private List<PermintaanData> allData;
+    private TableView<VerifikasiDTO> table;
+    private List<VerifikasiDTO> allData = new ArrayList<>();
+    private PeminjamanDAO peminjamanDAO = new PeminjamanDAO();
+
     private User admin;
     
     public VerifikasiPage(User admin) {    
         this.admin = admin;
-        allData = new ArrayList<>();
-        
-        // Dummy data permintaan dari user
-        allData.add(new PermintaanData("Medi Pribadi", "26/11/2025", "Spidol (RL001)", "1 pcs", "Lab SI & TI"));
-        allData.add(new PermintaanData("Medi Pribadi", "26/11/2025", "Penghapus Papan Tulis (RL002)", "1 pcs", "Lab SI & TI"));
-        allData.add(new PermintaanData("Ahmad Fauzi", "27/11/2025", "Laptop (NC001)", "1 pcs", "Lab Umum"));
-        allData.add(new PermintaanData("Siti Nurhaliza", "27/11/2025", "Proyektor (NC002)", "1 pcs", "Ruang 105"));
-        allData.add(new PermintaanData("Budi Santoso", "28/11/2025", "Webcam (NC003)", "2 pcs", "Lab SI"));
-        
         initializeUI();
+        loadData();
     }
 
     private void initializeUI() {
@@ -103,36 +99,32 @@ public class VerifikasiPage extends BorderPane {
             }
         });
 
-        TableColumn<PermintaanData, String> noCol = new TableColumn<>("No.");
+        TableColumn<VerifikasiDTO, String> noCol = new TableColumn<>("No.");
         noCol.setMinWidth(50);
         noCol.setMaxWidth(50);
         noCol.setStyle("-fx-alignment: CENTER;");
         noCol.setCellValueFactory(data -> 
             new SimpleStringProperty(String.valueOf(table.getItems().indexOf(data.getValue()) + 1)));
 
-        TableColumn<PermintaanData, String> namaCol = new TableColumn<>("Nama Pengguna");
+        TableColumn<VerifikasiDTO, String> namaCol = new TableColumn<>("Nama Pengguna");
         namaCol.setMinWidth(150);
-        namaCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getNamaPengguna()));
+        namaCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getNamaUser()));
 
-        TableColumn<PermintaanData, String> tanggalCol = new TableColumn<>("Tanggal Peminjaman");
+        TableColumn<VerifikasiDTO, String> tanggalCol = new TableColumn<>("Tanggal Peminjaman");
         tanggalCol.setMinWidth(150);
-        tanggalCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getTanggalPeminjaman()));
+        tanggalCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getTanggal()));
 
-        TableColumn<PermintaanData, String> barangCol = new TableColumn<>("Nama & Kode Barang");
+        TableColumn<VerifikasiDTO, String> barangCol = new TableColumn<>("Nama & Kode Barang");
         barangCol.setMinWidth(200);
         barangCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getNamaKodeBarang()));
 
-        TableColumn<PermintaanData, String> jumlahCol = new TableColumn<>("Jumlah Barang");
+        TableColumn<VerifikasiDTO, String> jumlahCol = new TableColumn<>("Jumlah Barang");
         jumlahCol.setMinWidth(120);
         jumlahCol.setMaxWidth(120);
-        jumlahCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getJumlahBarang()));
-
-        TableColumn<PermintaanData, String> ruangCol = new TableColumn<>("Ruang");
-        ruangCol.setMinWidth(120);
-        ruangCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getRuang()));
+        jumlahCol.setCellValueFactory(data -> new SimpleStringProperty(String.valueOf(data.getValue().getJumlah())));
 
         // Aksi column dengan approve & reject button
-        TableColumn<PermintaanData, Void> aksiCol = new TableColumn<>("Aksi");
+        TableColumn<VerifikasiDTO, Void> aksiCol = new TableColumn<>("Aksi");
         aksiCol.setMinWidth(150);
         aksiCol.setMaxWidth(150);
         aksiCol.setCellFactory(col -> new TableCell<>() {
@@ -170,17 +162,18 @@ public class VerifikasiPage extends BorderPane {
                 );
 
                 approveBtn.setOnAction(e -> {
-                    PermintaanData data = getTableView().getItems().get(getIndex());
+                    VerifikasiDTO data = getTableView().getItems().get(getIndex());
                     handleApprove(data);
                 });
 
+
                 rejectBtn.setOnAction(e -> {
-                    PermintaanData data = getTableView().getItems().get(getIndex());
+                    VerifikasiDTO data = getTableView().getItems().get(getIndex());
                     handleReject(data);
                 });
 
                 menuBtn.setOnAction(e -> {
-                    PermintaanData data = getTableView().getItems().get(getIndex());
+                    VerifikasiDTO data = getTableView().getItems().get(getIndex());
                     showDetailPopup(data);
                 });
 
@@ -195,8 +188,10 @@ public class VerifikasiPage extends BorderPane {
             }
         });
 
-        table.getColumns().addAll(noCol, namaCol, tanggalCol, barangCol, jumlahCol, ruangCol, aksiCol);
+        table.getColumns().addAll(noCol, namaCol, tanggalCol, barangCol, jumlahCol, aksiCol);
+        allData = new ArrayList<>();
         allData.forEach(data -> table.getItems().add(data));
+        
 
         // Search functionality
         searchField.textProperty().addListener((obs, old, newVal) -> {
@@ -207,7 +202,7 @@ public class VerifikasiPage extends BorderPane {
                 String keyword = newVal.toLowerCase();
                 allData.stream()
                     .filter(data -> 
-                        data.getNamaPengguna().toLowerCase().contains(keyword) ||
+                        data.getNamaUser().toLowerCase().contains(keyword) ||
                         data.getNamaKodeBarang().toLowerCase().contains(keyword))
                     .forEach(data -> table.getItems().add(data));
             }
@@ -219,57 +214,55 @@ public class VerifikasiPage extends BorderPane {
         this.setCenter(mainContent);
     }
 
-    private void handleApprove(PermintaanData data) {
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-        alert.setTitle("Konfirmasi Approve");
-        alert.setHeaderText(null);
-        alert.setContentText("Apakah Anda yakin ingin menyetujui permintaan dari " + data.getNamaPengguna() + "?");
-        
-        alert.showAndWait().ifPresent(response -> {
-            if (response == ButtonType.OK) {
-                Alert success = new Alert(Alert.AlertType.INFORMATION);
-                success.setTitle("Berhasil");
-                success.setHeaderText(null);
-                success.setContentText("Permintaan telah disetujui!");
-                success.showAndWait();
-                
-                // TODO: Update database status jadi Approved
-                // allData.remove(data);
-                // table.getItems().remove(data);
+    private void handleApprove(VerifikasiDTO v) {
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION, 
+            "Apakah Anda yakin ingin menyetujui peminjaman dari " + v.getNamaUser() + "?", 
+            ButtonType.OK, ButtonType.CANCEL);
+
+        confirm.showAndWait().ifPresent(response -> {
+            if(response == ButtonType.OK){
+                boolean success = peminjamanDAO.verifikasiSetuju(v.getIdPeminjaman());
+                if(success){
+                    Alert info = new Alert(Alert.AlertType.INFORMATION, "Peminjaman disetujui!");
+                    info.showAndWait();
+                    loadData(); // refresh tabel
+                }
             }
         });
     }
 
-    private void handleReject(PermintaanData data) {
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-        alert.setTitle("Konfirmasi Reject");
-        alert.setHeaderText(null);
-        alert.setContentText("Apakah Anda yakin ingin menolak permintaan dari " + data.getNamaPengguna() + "?");
-        
-        alert.showAndWait().ifPresent(response -> {
-            if (response == ButtonType.OK) {
-                Alert success = new Alert(Alert.AlertType.INFORMATION);
-                success.setTitle("Berhasil");
-                success.setHeaderText(null);
-                success.setContentText("Permintaan telah ditolak!");
-                success.showAndWait();
-                
-                // TODO: Update database status jadi Rejected
-                // allData.remove(data);
-                // table.getItems().remove(data);
+    private void handleReject(VerifikasiDTO v) {
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION, 
+            "Apakah Anda yakin ingin menolak peminjaman dari " + v.getNamaUser() + "?", 
+            ButtonType.OK, ButtonType.CANCEL);
+
+        confirm.showAndWait().ifPresent(response -> {
+            if(response == ButtonType.OK){
+                boolean success = peminjamanDAO.verifikasiTolak(v.getIdPeminjaman());
+                if(success){
+                    Alert info = new Alert(Alert.AlertType.INFORMATION, "Peminjaman ditolak!");
+                    info.showAndWait();
+                    loadData(); // refresh tabel
+                }
             }
         });
     }
 
-    private void showDetailPopup(PermintaanData data) {
+    private void loadData() {
+        table.getItems().clear();
+        allData = peminjamanDAO.getMenungguVerifikasi();
+        table.getItems().addAll(allData);
+    }
+
+    private void showDetailPopup(VerifikasiDTO data) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("Detail Permintaan");
         alert.setHeaderText("Informasi Lengkap");
         alert.setContentText(
-            "Nama: " + data.getNamaPengguna() + "\n" +
-            "Tanggal: " + data.getTanggalPeminjaman() + "\n" +
+            "Nama: " + data.getNamaUser()+ "\n" +
+            "Tanggal: " + data.getTanggal()+ "\n" +
             "Barang: " + data.getNamaKodeBarang() + "\n" +
-            "Jumlah: " + data.getJumlahBarang() + "\n" +
+            "Jumlah: " + data.getJumlah()+ "\n" +
             "Ruang: " + data.getRuang()
         );
         alert.showAndWait();
@@ -418,29 +411,7 @@ public class VerifikasiPage extends BorderPane {
         return sidebar;
     }
 
-    // Inner class for PermintaanData
-    public static class PermintaanData {
-        private String namaPengguna;
-        private String tanggalPeminjaman;
-        private String namaKodeBarang;
-        private String jumlahBarang;
-        private String ruang;
-        
-        public PermintaanData(String namaPengguna, String tanggalPeminjaman, String namaKodeBarang, 
-                             String jumlahBarang, String ruang) {
-            this.namaPengguna = namaPengguna;
-            this.tanggalPeminjaman = tanggalPeminjaman;
-            this.namaKodeBarang = namaKodeBarang;
-            this.jumlahBarang = jumlahBarang;
-            this.ruang = ruang;
-        }
-        
-        public String getNamaPengguna() { return namaPengguna; }
-        public String getTanggalPeminjaman() { return tanggalPeminjaman; }
-        public String getNamaKodeBarang() { return namaKodeBarang; }
-        public String getJumlahBarang() { return jumlahBarang; }
-        public String getRuang() { return ruang; }
-    }
+    
     
     private Button createMenuButton(String text, boolean isActive) {
         Button btn = new Button(text);
