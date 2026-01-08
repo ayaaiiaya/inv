@@ -3,53 +3,31 @@ package com.mycompany.inventaris.model;
 import java.util.Date;
 
 public class Replacement {
-
-    // ===== ID =====
     private int idReplacement;
     private int idUser;
     private int idBarang;
     private int idPeminjaman;
-
-    // ===== DATA BARANG & USER (JOIN) =====
-    private String kode;           // BR-001
+    private int jumlah;
+    private String alasan;
+    private String kondisiBarang;   
+    private String status;          
+    private Date tanggal;
     private String namaBarang;
     private String kodeBarang;
-    private String namaPeminjam;
+    private String lokasi;
 
-    // ===== DETAIL =====
-    private int jumlah;
-    private String kondisi;
-    private String alasan;
-    private String status;
-
-    // ===== TANGGAL =====
-    private Date tanggalPengajuan;
-    private Date tanggalVerifikasi;
-
-    // ================= CONSTRUCTOR UNTUK TABLE =================
-    public Replacement(
-            int idUser1, String kode, String namaBarang, String kodeBarang, String namaPeminjam) {
-        this.kode = kode;
-        this.namaBarang = namaBarang;
-        this.kodeBarang = kodeBarang;
-        this.namaPeminjam = namaPeminjam;
-        this.kondisi = kondisi;
-        this.status = status;
-    }
-
-    // ================= CONSTRUCTOR INSERT =================
     public Replacement(int idUser, int idBarang, int idPeminjaman,
-                       int jumlah, String kondisi, String alasan) {
+                       int jumlah, String alasan, String kondisiBarang) {
         this.idUser = idUser;
         this.idBarang = idBarang;
         this.idPeminjaman = idPeminjaman;
         this.jumlah = jumlah;
-        this.kondisi = kondisi;
         this.alasan = alasan;
-        this.status = "PENDING";
+        this.kondisiBarang = kondisiBarang;
     }
 
-    // ================= GETTER & SETTER =================
+    public Replacement() {}
+
     public int getIdReplacement() {
         return idReplacement;
     }
@@ -82,36 +60,12 @@ public class Replacement {
         this.idPeminjaman = idPeminjaman;
     }
 
-    public String getKode() {
-        return kode;
-    }
-
-    public String getNamaBarang() {
-        return namaBarang;
-    }
-
-    public String getKodeBarang() {
-        return kodeBarang;
-    }
-
-    public String getNamaPeminjam() {
-        return namaPeminjam;
-    }
-
     public int getJumlah() {
         return jumlah;
     }
 
     public void setJumlah(int jumlah) {
         this.jumlah = jumlah;
-    }
-
-    public String getKondisi() {
-        return kondisi;
-    }
-
-    public void setKondisi(String kondisi) {
-        this.kondisi = kondisi;
     }
 
     public String getAlasan() {
@@ -122,6 +76,14 @@ public class Replacement {
         this.alasan = alasan;
     }
 
+    public String getKondisiBarang() {
+        return kondisiBarang;
+    }
+
+    public void setKondisiBarang(String kondisiBarang) {
+        this.kondisiBarang = kondisiBarang;
+    }
+
     public String getStatus() {
         return status;
     }
@@ -130,19 +92,36 @@ public class Replacement {
         this.status = status;
     }
 
-    public Date getTanggalPengajuan() {
-        return tanggalPengajuan;
+    public Date getTanggal() {
+        return tanggal;
     }
 
-    public void setTanggalPengajuan(Date tanggalPengajuan) {
-        this.tanggalPengajuan = tanggalPengajuan;
+    public void setTanggal(Date tanggal) {
+        this.tanggal = tanggal;
     }
 
-    public Date getTanggalVerifikasi() {
-        return tanggalVerifikasi;
+    // ===== OPTIONAL (UNTUK POPUP / TABEL) =====
+    public String getNamaBarang() {
+        return namaBarang;
     }
 
-    public void setTanggalVerifikasi(Date tanggalVerifikasi) {
-        this.tanggalVerifikasi = tanggalVerifikasi;
+    public void setNamaBarang(String namaBarang) {
+        this.namaBarang = namaBarang;
+    }
+
+    public String getKodeBarang() {
+        return kodeBarang;
+    }
+
+    public void setKodeBarang(String kodeBarang) {
+        this.kodeBarang = kodeBarang;
+    }
+
+    public String getLokasi() {
+        return lokasi;
+    }
+
+    public void setLokasi(String lokasi) {
+        this.lokasi = lokasi;
     }
 }

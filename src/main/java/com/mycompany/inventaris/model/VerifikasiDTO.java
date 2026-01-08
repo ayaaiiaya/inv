@@ -10,15 +10,9 @@ public class VerifikasiDTO {
     private String status;
     private int idBarang;
 
-    public VerifikasiDTO(
-            int idPeminjaman,
-            String namaUser,
-            String tanggal,
-            String namaKodeBarang,
-            int jumlah,
-            String ruang,
-            String status,
-            int idBarang) {
+    public VerifikasiDTO(int idPeminjaman, String namaUser, String tanggal,
+                         String namaKodeBarang, int jumlah, String ruang,
+                         String status, int idBarang) {
 
         this.idPeminjaman = idPeminjaman;
         this.namaUser = namaUser;
@@ -27,7 +21,7 @@ public class VerifikasiDTO {
         this.jumlah = jumlah;
         this.ruang = ruang;
         this.status = status;
-        this.idBarang = idBarang;
+        this.idBarang = idBarang; 
     }
 
     public int getIdPeminjaman() { return idPeminjaman; }
