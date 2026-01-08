@@ -3,6 +3,7 @@ package com.mycompany.inventaris.view;
 import com.mycompany.inventaris.model.User;
 import com.mycompany.inventaris.dao.AuditTrailDAO;
 import com.mycompany.inventaris.dao.PeminjamanDAO;
+import com.mycompany.inventaris.dao.PengembalianDAO;
 import com.mycompany.inventaris.dao.ReplacementDAO;
 import com.mycompany.inventaris.model.VerifikasiDTO;
 
@@ -27,6 +28,8 @@ public class VerifikasiPage extends BorderPane {
 
     private final PeminjamanDAO peminjamanDAO = new PeminjamanDAO();
     private final ReplacementDAO replacementDAO = new ReplacementDAO();
+    private final PengembalianDAO pengembalianDAO = new PengembalianDAO();
+
 
     private User admin;
 
@@ -207,7 +210,6 @@ public class VerifikasiPage extends BorderPane {
         this.setCenter(mainContent);
     }
 
-    // ✅ approve menyesuaikan mode
     private void handleApprove(VerifikasiDTO v) {
         String teks = switch (modeAktif) {
             case "Pengembalian" -> "menyetujui pengembalian dari ";
@@ -224,7 +226,7 @@ public class VerifikasiPage extends BorderPane {
 
                 boolean success;
                 if ("Pengembalian".equals(modeAktif)) {
-                    success = peminjamanDAO.verifikasiPengembalianSetuju(v.getIdPeminjaman());
+                    success = pengembalianDAO.setujuiPengembalian(v.getIdPeminjaman());
                 } else if ("Replacement".equals(modeAktif)) {
                     // idReplacement kita taruh di idPeminjaman DTO
                     success = replacementDAO.setujuiReplacement(v.getIdPeminjaman());
@@ -242,7 +244,6 @@ public class VerifikasiPage extends BorderPane {
         });
     }
 
-    // ✅ reject menyesuaikan mode
     private void handleReject(VerifikasiDTO v) {
         String teks = switch (modeAktif) {
             case "Pengembalian" -> "menolak pengembalian dari ";
@@ -259,7 +260,7 @@ public class VerifikasiPage extends BorderPane {
 
                 boolean success;
                 if ("Pengembalian".equals(modeAktif)) {
-                    success = peminjamanDAO.verifikasiPengembalianTolak(v.getIdPeminjaman());
+                    success = pengembalianDAO.tolakPengembalian(v.getIdPeminjaman());
                 } else if ("Replacement".equals(modeAktif)) {
                     success = replacementDAO.tolakReplacement(v.getIdPeminjaman());
                 } else {
@@ -276,14 +277,13 @@ public class VerifikasiPage extends BorderPane {
         });
     }
 
-    // ✅ loadData menyesuaikan mode (tanpa ubah layout)
     private void loadData() {
         table.getItems().clear();
 
         if ("Pengembalian".equals(modeAktif)) {
-            allData = peminjamanDAO.getMenungguPengembalian(); // pastikan method ini ADA
+            allData = pengembalianDAO.getMenungguPengembalian(); 
         } else if ("Replacement".equals(modeAktif)) {
-            allData = replacementDAO.getMenungguReplacement(); // pastikan method ini ADA
+            allData = replacementDAO.getMenungguReplacement(); 
         } else {
             allData = peminjamanDAO.getMenungguVerifikasi();
         }

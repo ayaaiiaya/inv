@@ -6,6 +6,9 @@ import com.mycompany.inventaris.model.LaporanPeminjamanDTO;
 import com.mycompany.inventaris.model.LaporanPenggunaanDTO;
 import com.mycompany.inventaris.model.PeminjamanChoice;
 import com.mycompany.inventaris.model.VerifikasiDTO;
+import com.mycompany.inventaris.dao.AuditTrailDAO;
+import com.mycompany.inventaris.service.SessionManager;
+
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -20,12 +23,13 @@ public class PeminjamanDAO {
     // INSERT PEMINJAMAN
     // =========================
     public boolean insert(Peminjaman pn) {
-
         String sql = """
             INSERT INTO peminjaman
             (id_user, id_barang, jumlah, tanggal_peminjaman, tanggal_kembali, lokasi, status)
             VALUES (?, ?, ?, ?, ?, ?, 'pending')
         """;
+
+        String lokasi = null;
 
         try (Connection conn = Koneksi.getKoneksi();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -41,19 +45,45 @@ public class PeminjamanDAO {
                 ps.setNull(5, Types.DATE);
             }
 
-            String lokasi = null;
             try { lokasi = pn.getLokasi(); } catch (Exception ignore) {}
             if (lokasi == null || lokasi.trim().isEmpty()) lokasi = "-";
             ps.setString(6, lokasi);
 
-            return ps.executeUpdate() > 0;
+            int rows = ps.executeUpdate();
+            boolean ok = rows > 0;
+
+            AuditTrailDAO.log(
+                SessionManager.getUserId(),
+                SessionManager.getUsername(),
+                "AJUKAN_PEMINJAMAN",
+                "Ajukan peminjaman: id_barang=" + pn.getIdBarang()
+                    + ", jumlah=" + pn.getJumlah()
+                    + ", lokasi=" + lokasi,
+                SessionManager.getIp(),
+                ok ? "BERHASIL" : "GAGAL"
+            );
+
+            return ok;
 
         } catch (Exception e) {
+            AuditTrailDAO.log(
+                SessionManager.getUserId(),
+                SessionManager.getUsername(),
+                "AJUKAN_PEMINJAMAN",
+                "Gagal ajukan peminjaman: id_barang=" + pn.getIdBarang()
+                    + ", jumlah=" + pn.getJumlah()
+                    + ", lokasi=" + (lokasi == null ? "-" : lokasi)
+                    + " | error=" + e.getMessage(),
+                SessionManager.getIp(),
+                "GAGAL"
+            );
+
             System.out.println("Insert Peminjaman Error: " + e.getMessage());
             e.printStackTrace();
             return false;
         }
     }
+
 
     // =========================
     // LAPORAN PEMINJAMAN (ADMIN)
@@ -265,7 +295,6 @@ public class PeminjamanDAO {
     // VERIFIKASI SETUJU (ADMIN)
     // =========================
     public boolean verifikasiSetuju(int idPeminjaman) {
-
         String cek = """
             SELECT p.id_barang, p.jumlah, b.stok
             FROM peminjaman p
@@ -300,6 +329,16 @@ public class PeminjamanDAO {
                 try (ResultSet rs = ps.executeQuery()) {
                     if (!rs.next()) {
                         conn.rollback();
+
+                        AuditTrailDAO.log(
+                            SessionManager.getUserId(),
+                            SessionManager.getUsername(),
+                            "VERIFIKASI_PINJAM_SETUJU",
+                            "Gagal setujui: peminjaman id=" + idPeminjaman + " (data tidak ditemukan)",
+                            SessionManager.getIp(),
+                            "GAGAL"
+                        );
+
                         return false;
                     }
                     idBarang = rs.getInt("id_barang");
@@ -310,6 +349,17 @@ public class PeminjamanDAO {
 
             if (stok < jumlah) {
                 conn.rollback();
+
+                AuditTrailDAO.log(
+                    SessionManager.getUserId(),
+                    SessionManager.getUsername(),
+                    "VERIFIKASI_PINJAM_SETUJU",
+                    "Gagal setujui: stok kurang (id_peminjaman=" + idPeminjaman +
+                        ", id_barang=" + idBarang + ", stok=" + stok + ", minta=" + jumlah + ")",
+                    SessionManager.getIp(),
+                    "GAGAL"
+                );
+
                 return false;
             }
 
@@ -319,8 +369,19 @@ public class PeminjamanDAO {
                 ps1.setInt(1, idPeminjaman);
                 updated = ps1.executeUpdate();
             }
+
             if (updated == 0) {
                 conn.rollback();
+
+                AuditTrailDAO.log(
+                    SessionManager.getUserId(),
+                    SessionManager.getUsername(),
+                    "VERIFIKASI_PINJAM_SETUJU",
+                    "Gagal setujui: status bukan pending (id_peminjaman=" + idPeminjaman + ")",
+                    SessionManager.getIp(),
+                    "GAGAL"
+                );
+
                 return false;
             }
 
@@ -333,14 +394,38 @@ public class PeminjamanDAO {
 
             conn.commit();
             conn.setAutoCommit(true);
+
+            AuditTrailDAO.log(
+                SessionManager.getUserId(),
+                SessionManager.getUsername(),
+                "VERIFIKASI_PINJAM_SETUJU",
+                "Setujui peminjaman id=" + idPeminjaman +
+                    " | id_barang=" + idBarang +
+                    " | jumlah=" + jumlah,
+                SessionManager.getIp(),
+                "BERHASIL"
+            );
+
             return true;
 
         } catch (Exception e) {
+            try {  } catch (Exception ignore) {}
+
+            AuditTrailDAO.log(
+                SessionManager.getUserId(),
+                SessionManager.getUsername(),
+                "VERIFIKASI_PINJAM_SETUJU",
+                "Error setujui peminjaman id=" + idPeminjaman + " | error=" + e.getMessage(),
+                SessionManager.getIp(),
+                "GAGAL"
+            );
+
             System.out.println("Verifikasi Setuju Error: " + e.getMessage());
             e.printStackTrace();
             return false;
         }
     }
+
 
     // =========================
     // VERIFIKASI TOLAK (ADMIN)
@@ -357,38 +442,89 @@ public class PeminjamanDAO {
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, idPeminjaman);
-            return ps.executeUpdate() > 0;
+
+            int rows = ps.executeUpdate();
+            boolean ok = rows > 0;
+
+            AuditTrailDAO.log(
+                SessionManager.getUserId(),
+                SessionManager.getUsername(),
+                "VERIFIKASI_PINJAM_TOLAK",
+                ok
+                  ? "Tolak peminjaman id=" + idPeminjaman
+                  : "Gagal tolak (status bukan pending?) id=" + idPeminjaman,
+                SessionManager.getIp(),
+                ok ? "BERHASIL" : "GAGAL"
+            );
+
+            return ok;
 
         } catch (Exception e) {
+
+            AuditTrailDAO.log(
+                SessionManager.getUserId(),
+                SessionManager.getUsername(),
+                "VERIFIKASI_PINJAM_TOLAK",
+                "Error tolak peminjaman id=" + idPeminjaman + " | error=" + e.getMessage(),
+                SessionManager.getIp(),
+                "GAGAL"
+            );
+
             System.out.println("Verifikasi Tolak Error: " + e.getMessage());
             e.printStackTrace();
             return false;
         }
     }
 
-    // =========================
-    // USER: AJUKAN PENGEMBALIAN
-    // =========================
-    public boolean ajukanPengembalian(int idPeminjaman) {
-        String sql = """
-            UPDATE peminjaman
-            SET status = 'pengembalian'
-            WHERE id_peminjaman = ?
-              AND status = 'dipinjam'
-        """;
 
-        try (Connection conn = Koneksi.getKoneksi();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        // =========================
+        // USER: AJUKAN PENGEMBALIAN
+        // =========================
+        public boolean ajukanPengembalian(int idPeminjaman) {
+            String sql = """
+                UPDATE peminjaman
+                SET status = 'pengembalian'
+                WHERE id_peminjaman = ?
+                  AND status = 'dipinjam'
+            """;
 
-            ps.setInt(1, idPeminjaman);
-            return ps.executeUpdate() > 0;
+            try (Connection conn = Koneksi.getKoneksi();
+                 PreparedStatement ps = conn.prepareStatement(sql)) {
 
-        } catch (Exception e) {
-            System.out.println("Ajukan Pengembalian Error: " + e.getMessage());
-            e.printStackTrace();
-            return false;
+                ps.setInt(1, idPeminjaman);
+
+                int rows = ps.executeUpdate();
+                boolean ok = rows > 0;
+
+                AuditTrailDAO.log(
+                    SessionManager.getUserId(),
+                    SessionManager.getUsername(),
+                    "AJUKAN_PENGEMBALIAN",
+                    ok ? "Ajukan pengembalian id=" + idPeminjaman
+                       : "Gagal ajukan pengembalian (status bukan dipinjam?) id=" + idPeminjaman,
+                    SessionManager.getIp(),
+                    ok ? "BERHASIL" : "GAGAL"
+                );
+
+                return ok;
+
+            } catch (Exception e) {
+
+                AuditTrailDAO.log(
+                    SessionManager.getUserId(),
+                    SessionManager.getUsername(),
+                    "AJUKAN_PENGEMBALIAN",
+                    "Error ajukan pengembalian id=" + idPeminjaman + " | error=" + e.getMessage(),
+                    SessionManager.getIp(),
+                    "GAGAL"
+                );
+
+                System.out.println("Ajukan Pengembalian Error: " + e.getMessage());
+                e.printStackTrace();
+                return false;
+            }
         }
-    }
+
 
     // =========================
     // ADMIN: LIST MENUNGGU PENGEMBALIAN
@@ -409,7 +545,7 @@ public class PeminjamanDAO {
             FROM peminjaman p
             JOIN user u ON p.id_user = u.id_user
             JOIN barang b ON p.id_barang = b.id_barang
-            WHERE p.status = 'pengembalian'
+            WHERE p.status = 'dipinjam'
             ORDER BY p.tanggal_peminjaman DESC
         """;
 
@@ -443,98 +579,164 @@ public class PeminjamanDAO {
     // =========================
     public boolean verifikasiPengembalianSetuju(int idPeminjaman) {
 
-        String cek = """
-            SELECT p.id_barang, p.jumlah
-            FROM peminjaman p
-            WHERE p.id_peminjaman = ?
-            FOR UPDATE
-        """;
+    String cek = """
+        SELECT p.id_barang, p.jumlah
+        FROM peminjaman p
+        WHERE p.id_peminjaman = ?
+        FOR UPDATE
+    """;
 
-        String updatePeminjaman = """
-            UPDATE peminjaman
-            SET status = 'dikembalikan',
-                tanggal_kembali = NOW()
-            WHERE id_peminjaman = ?
-              AND status = 'pengembalian'
-        """;
+    String updatePeminjaman = """
+        UPDATE peminjaman
+        SET status = 'dikembalikan',
+            tanggal_kembali = NOW()
+        WHERE id_peminjaman = ?
+          AND status = 'pengembalian'
+    """;
 
-        String updateStok = """
-            UPDATE barang
-            SET stok = stok + ?
-            WHERE id_barang = ?
-        """;
+    String updateStok = """
+        UPDATE barang
+        SET stok = stok + ?
+        WHERE id_barang = ?
+    """;
 
-        try (Connection conn = Koneksi.getKoneksi()) {
-            conn.setAutoCommit(false);
+    try (Connection conn = Koneksi.getKoneksi()) {
+        conn.setAutoCommit(false);
 
-            int idBarang;
-            int jumlah;
+        int idBarang;
+        int jumlah;
 
-            // 1) lock row peminjaman
-            try (PreparedStatement ps = conn.prepareStatement(cek)) {
-                ps.setInt(1, idPeminjaman);
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (!rs.next()) {
-                        conn.rollback();
-                        return false;
-                    }
-                    idBarang = rs.getInt("id_barang");
-                    jumlah = rs.getInt("jumlah");
+        // 1) lock row peminjaman
+        try (PreparedStatement ps = conn.prepareStatement(cek)) {
+            ps.setInt(1, idPeminjaman);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) {
+                    conn.rollback();
+
+                    AuditTrailDAO.log(
+                        SessionManager.getUserId(),
+                        SessionManager.getUsername(),
+                        "VERIFIKASI_KEMBALI_SETUJU",
+                        "Gagal setujui pengembalian: data tidak ditemukan (id_peminjaman=" + idPeminjaman + ")",
+                        SessionManager.getIp(),
+                        "GAGAL"
+                    );
+
+                    return false;
                 }
+                idBarang = rs.getInt("id_barang");
+                jumlah = rs.getInt("jumlah");
             }
+        }
 
-            // 2) update peminjaman
-            int updated;
-            try (PreparedStatement ps = conn.prepareStatement(updatePeminjaman)) {
-                ps.setInt(1, idPeminjaman);
-                updated = ps.executeUpdate();
-            }
-            if (updated == 0) {
-                conn.rollback();
-                return false;
-            }
+        // 2) update peminjaman (harus status pengembalian)
+        int updated;
+        try (PreparedStatement ps = conn.prepareStatement(updatePeminjaman)) {
+            ps.setInt(1, idPeminjaman);
+            updated = ps.executeUpdate();
+        }
 
-            // 3) update stok (+)
-            try (PreparedStatement ps = conn.prepareStatement(updateStok)) {
-                ps.setInt(1, jumlah);
-                ps.setInt(2, idBarang);
-                ps.executeUpdate();
-            }
+        if (updated == 0) {
+            conn.rollback();
 
-            conn.commit();
-            conn.setAutoCommit(true);
-            return true;
+            AuditTrailDAO.log(
+                SessionManager.getUserId(),
+                SessionManager.getUsername(),
+                "VERIFIKASI_KEMBALI_SETUJU",
+                "Gagal setujui pengembalian: status bukan 'pengembalian' (id_peminjaman=" + idPeminjaman + ")",
+                SessionManager.getIp(),
+                "GAGAL"
+            );
 
-        } catch (Exception e) {
-            System.out.println("Verifikasi Pengembalian Setuju Error: " + e.getMessage());
-            e.printStackTrace();
             return false;
         }
+
+        // 3) update stok (+)
+        try (PreparedStatement ps = conn.prepareStatement(updateStok)) {
+            ps.setInt(1, jumlah);
+            ps.setInt(2, idBarang);
+            ps.executeUpdate();
+        }
+
+        conn.commit();
+        conn.setAutoCommit(true);
+        AuditTrailDAO.log(
+            SessionManager.getUserId(),
+            SessionManager.getUsername(),
+            "VERIFIKASI_KEMBALI_SETUJU",
+            "Setujui pengembalian id=" + idPeminjaman + " | id_barang=" + idBarang + " | jumlah=" + jumlah,
+            SessionManager.getIp(),
+            "BERHASIL"
+        );
+
+        return true;
+
+    } catch (Exception e) {
+
+        AuditTrailDAO.log(
+            SessionManager.getUserId(),
+            SessionManager.getUsername(),
+            "VERIFIKASI_KEMBALI_SETUJU",
+            "Error setujui pengembalian id=" + idPeminjaman + " | error=" + e.getMessage(),
+            SessionManager.getIp(),
+            "GAGAL"
+        );
+
+        System.out.println("Verifikasi Pengembalian Setuju Error: " + e.getMessage());
+        e.printStackTrace();
+        return false;
     }
+}
+
 
     // =========================
     // ADMIN: TOLAK PENGEMBALIAN
     // =========================
     public boolean verifikasiPengembalianTolak(int idPeminjaman) {
-        String sql = """
-            UPDATE peminjaman
-            SET status = 'dipinjam'
-            WHERE id_peminjaman = ?
-              AND status = 'pengembalian'
-        """;
+    String sql = """
+        UPDATE peminjaman
+        SET status = 'dipinjam'
+        WHERE id_peminjaman = ?
+          AND status = 'pengembalian'
+    """;
 
-        try (Connection conn = Koneksi.getKoneksi();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+    try (Connection conn = Koneksi.getKoneksi();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
 
-            ps.setInt(1, idPeminjaman);
-            return ps.executeUpdate() > 0;
+        ps.setInt(1, idPeminjaman);
 
-        } catch (Exception e) {
-            System.out.println("Verifikasi Pengembalian Tolak Error: " + e.getMessage());
-            e.printStackTrace();
-            return false;
-        }
+        int rows = ps.executeUpdate();
+        boolean ok = rows > 0;
+
+        AuditTrailDAO.log(
+            SessionManager.getUserId(),
+            SessionManager.getUsername(),
+            "VERIFIKASI_KEMBALI_TOLAK",
+            ok ? "Tolak pengembalian id=" + idPeminjaman + " (dikembalikan ke status dipinjam)"
+               : "Gagal tolak pengembalian (status bukan pengembalian?) id=" + idPeminjaman,
+            SessionManager.getIp(),
+            ok ? "BERHASIL" : "GAGAL"
+        );
+
+        return ok;
+
+    } catch (Exception e) {
+
+        AuditTrailDAO.log(
+            SessionManager.getUserId(),
+            SessionManager.getUsername(),
+            "VERIFIKASI_KEMBALI_TOLAK",
+            "Error tolak pengembalian id=" + idPeminjaman + " | error=" + e.getMessage(),
+            SessionManager.getIp(),
+            "GAGAL"
+        );
+
+        System.out.println("Verifikasi Pengembalian Tolak Error: " + e.getMessage());
+        e.printStackTrace();
+        return false;
     }
+}
+
 
     // =========================
     // COMBOBOX: BARANG YANG SEDANG DIPINJAM USER

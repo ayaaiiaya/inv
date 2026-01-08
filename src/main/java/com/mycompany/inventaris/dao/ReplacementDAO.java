@@ -3,6 +3,9 @@ package com.mycompany.inventaris.dao;
 import com.mycompany.inventaris.Koneksi;
 import com.mycompany.inventaris.model.Replacement;
 import com.mycompany.inventaris.model.VerifikasiDTO;
+import com.mycompany.inventaris.dao.AuditTrailDAO;
+import com.mycompany.inventaris.service.SessionManager;
+
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -27,19 +30,46 @@ public class ReplacementDAO {
             ps.setInt(3, r.getIdPeminjaman());
             ps.setInt(4, r.getJumlah());
 
-            // alasan aman
             String alasan = r.getAlasan();
             if (alasan == null || alasan.trim().isEmpty()) alasan = "-";
             ps.setString(5, alasan);
 
-            // kondisi barang harus cocok dengan enum DB kamu
             String kondisi = r.getKondisiBarang();
             if (kondisi == null || kondisi.trim().isEmpty()) kondisi = "rusak ringan";
             ps.setString(6, kondisi);
 
-            return ps.executeUpdate() > 0;
+            int rows = ps.executeUpdate();
+            boolean ok = rows > 0;
+
+            AuditTrailDAO.log(
+                SessionManager.getUserId(),
+                SessionManager.getUsername(),
+                "AJUKAN_REPLACEMENT",
+                "Ajukan replacement: id_barang=" + r.getIdBarang()
+                    + ", id_peminjaman=" + r.getIdPeminjaman()
+                    + ", jumlah=" + r.getJumlah()
+                    + ", alasan=" + alasan
+                    + ", kondisi=" + kondisi,
+                SessionManager.getIp(),
+                ok ? "BERHASIL" : "GAGAL"
+            );
+
+            return ok;
+
 
         } catch (Exception e) {
+            AuditTrailDAO.log(
+                SessionManager.getUserId(),
+                SessionManager.getUsername(),
+                "AJUKAN_REPLACEMENT",
+                "Error ajukan replacement: id_barang=" + r.getIdBarang()
+                    + ", id_peminjaman=" + r.getIdPeminjaman()
+                    + ", jumlah=" + r.getJumlah()
+                    + " | error=" + e.getMessage(),
+                SessionManager.getIp(),
+                "GAGAL"
+            );
+
             System.out.println("Insert Replacement Error: " + e.getMessage());
             e.printStackTrace();
             return false;
@@ -97,46 +127,96 @@ public class ReplacementDAO {
     }
 
     public boolean setujuiReplacement(int idReplacement) {
-        String sql = """
-            UPDATE replacement
-            SET status = 'approved'
-            WHERE id_replacement = ?
-              AND status = 'pending'
-        """;
+    String sql = """
+        UPDATE replacement
+        SET status = 'approved'
+        WHERE id_replacement = ?
+          AND status = 'pending'
+    """;
 
-        try (Connection conn = Koneksi.getKoneksi();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+    try (Connection conn = Koneksi.getKoneksi();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
 
-            ps.setInt(1, idReplacement);
-            return ps.executeUpdate() > 0;
+        ps.setInt(1, idReplacement);
 
-        } catch (Exception e) {
-            System.out.println("Setujui Replacement Error: " + e.getMessage());
-            e.printStackTrace();
-            return false;
-        }
+        int rows = ps.executeUpdate();
+        boolean ok = rows > 0;
+
+        AuditTrailDAO.log(
+            SessionManager.getUserId(),
+            SessionManager.getUsername(),
+            "VERIFIKASI_REPLACEMENT_SETUJU",
+            ok ? "Setujui replacement id=" + idReplacement
+               : "Gagal setujui replacement (status bukan pending?) id=" + idReplacement,
+            SessionManager.getIp(),
+            ok ? "BERHASIL" : "GAGAL"
+        );
+
+        return ok;
+
+    } catch (Exception e) {
+
+        AuditTrailDAO.log(
+            SessionManager.getUserId(),
+            SessionManager.getUsername(),
+            "VERIFIKASI_REPLACEMENT_SETUJU",
+            "Error setujui replacement id=" + idReplacement + " | error=" + e.getMessage(),
+            SessionManager.getIp(),
+            "GAGAL"
+        );
+
+        System.out.println("Setujui Replacement Error: " + e.getMessage());
+        e.printStackTrace();
+        return false;
     }
+}
+
 
     public boolean tolakReplacement(int idReplacement) {
-        String sql = """
-            UPDATE replacement
-            SET status = 'rejected'
-            WHERE id_replacement = ?
-              AND status = 'pending'
-        """;
+    String sql = """
+        UPDATE replacement
+        SET status = 'rejected'
+        WHERE id_replacement = ?
+          AND status = 'pending'
+    """;
 
-        try (Connection conn = Koneksi.getKoneksi();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+    try (Connection conn = Koneksi.getKoneksi();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
 
-            ps.setInt(1, idReplacement);
-            return ps.executeUpdate() > 0;
+        ps.setInt(1, idReplacement);
 
-        } catch (Exception e) {
-            System.out.println("Tolak Replacement Error: " + e.getMessage());
-            e.printStackTrace();
-            return false;
-        }
+        int rows = ps.executeUpdate();
+        boolean ok = rows > 0;
+
+        AuditTrailDAO.log(
+            SessionManager.getUserId(),
+            SessionManager.getUsername(),
+            "VERIFIKASI_REPLACEMENT_TOLAK",
+            ok ? "Tolak replacement id=" + idReplacement
+               : "Gagal tolak replacement (status bukan pending?) id=" + idReplacement,
+            SessionManager.getIp(),
+            ok ? "BERHASIL" : "GAGAL"
+        );
+
+        return ok;
+
+    } catch (Exception e) {
+
+        AuditTrailDAO.log(
+            SessionManager.getUserId(),
+            SessionManager.getUsername(),
+            "VERIFIKASI_REPLACEMENT_TOLAK",
+            "Error tolak replacement id=" + idReplacement + " | error=" + e.getMessage(),
+            SessionManager.getIp(),
+            "GAGAL"
+        );
+
+        System.out.println("Tolak Replacement Error: " + e.getMessage());
+        e.printStackTrace();
+        return false;
     }
+}
+
     
     public Replacement getDetail(int idReplacement) {
         String sql = """

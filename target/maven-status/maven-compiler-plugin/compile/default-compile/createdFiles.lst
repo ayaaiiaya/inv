@@ -1,4 +1,3 @@
-com\mycompany\inventaris\dao\VerifikasiDAO.class
 com\mycompany\inventaris\service\LoginService.class
 com\mycompany\inventaris\view\PeminjamanBarangPage.class
 com\mycompany\inventaris\model\Peminjaman.class
@@ -69,4 +68,5 @@ com\mycompany\inventaris\view\AdminUserPage$4.class
 com\mycompany\inventaris\view\LaporanPenggunaanPage.class
 com\mycompany\inventaris\dao\BarangDAO.class
 com\mycompany\inventaris\view\LoginPage.class
+com\mycompany\inventaris\service\SessionManager.class
 com\mycompany\inventaris\view\AuditTrailPage$1.class

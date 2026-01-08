@@ -10,7 +10,6 @@ C:\Users\pnady\OneDrive\Dokumen\NetBeansProjects\inventaris\src\main\java\com\my
 C:\Users\pnady\OneDrive\Dokumen\NetBeansProjects\inventaris\src\main\java\com\mycompany\inventaris\dao\RiwayatDAO.java
 C:\Users\pnady\OneDrive\Dokumen\NetBeansProjects\inventaris\src\main\java\com\mycompany\inventaris\dao\StatusDAO.java
 C:\Users\pnady\OneDrive\Dokumen\NetBeansProjects\inventaris\src\main\java\com\mycompany\inventaris\dao\UserAdminDAO.java
-C:\Users\pnady\OneDrive\Dokumen\NetBeansProjects\inventaris\src\main\java\com\mycompany\inventaris\dao\VerifikasiDAO.java
 C:\Users\pnady\OneDrive\Dokumen\NetBeansProjects\inventaris\src\main\java\com\mycompany\inventaris\Inventaris.java
 C:\Users\pnady\OneDrive\Dokumen\NetBeansProjects\inventaris\src\main\java\com\mycompany\inventaris\Koneksi.java
 C:\Users\pnady\OneDrive\Dokumen\NetBeansProjects\inventaris\src\main\java\com\mycompany\inventaris\Main.java
@@ -30,6 +29,7 @@ C:\Users\pnady\OneDrive\Dokumen\NetBeansProjects\inventaris\src\main\java\com\my
 C:\Users\pnady\OneDrive\Dokumen\NetBeansProjects\inventaris\src\main\java\com\mycompany\inventaris\model\Verifikasi.java
 C:\Users\pnady\OneDrive\Dokumen\NetBeansProjects\inventaris\src\main\java\com\mycompany\inventaris\model\VerifikasiDTO.java
 C:\Users\pnady\OneDrive\Dokumen\NetBeansProjects\inventaris\src\main\java\com\mycompany\inventaris\service\LoginService.java
+C:\Users\pnady\OneDrive\Dokumen\NetBeansProjects\inventaris\src\main\java\com\mycompany\inventaris\service\SessionManager.java
 C:\Users\pnady\OneDrive\Dokumen\NetBeansProjects\inventaris\src\main\java\com\mycompany\inventaris\view\AdminPage.java
 C:\Users\pnady\OneDrive\Dokumen\NetBeansProjects\inventaris\src\main\java\com\mycompany\inventaris\view\AdminUserPage.java
 C:\Users\pnady\OneDrive\Dokumen\NetBeansProjects\inventaris\src\main\java\com\mycompany\inventaris\view\AuditTrailPage.java
